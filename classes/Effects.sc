@@ -101,6 +101,10 @@ PingPongDelay {
        
         var dry;
 
+        tempo = tempo ?? { TempoSyncUtility.searchForTempo };
+
+        // add a fade in line to dull glitches when swapped in and out.
+        // - glitches occur due to LocalBuf taking a moment to initialise #9
         input = input * Line.kr(0, 1, 0.5);
 
         dry = input;
@@ -113,7 +117,7 @@ PingPongDelay {
         frames = BufFrames.kr(buffer);
 
         // compensate for control rate delay added by LocalIn
-        delaySamps = max(0, delayTime * SampleRate.ir - ControlDur.ir).round;
+        delaySamps = max(0, delayTime * SampleRate.ir - ControlDur.ir / tempo).round;
 
         // read/write head "on tape" - acts as drive for read/write operations
 		phase = Phasor.ar(0, 1, 0, frames);
