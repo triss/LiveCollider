@@ -1,4 +1,6 @@
 BufferPreallocator {
+    classvar singleton;
+
 	var <numBuffers;
 	var <numFrames;
 	var <numChannels;
@@ -6,6 +8,12 @@ BufferPreallocator {
 
 	var buffers;
 	
+    *initClass {
+        StartUp.add {
+            singleton = BufferPreallocator();
+        }
+    }
+
 	*new { |numBuffers=8 numFrames=441000 numChannels=1 server|
 		^super.newCopyArgs(numBuffers, numFrames, numChannels, server).init;
 	}
@@ -50,4 +58,11 @@ BufferPreallocator {
         numChannels = nc;
         this.resetBuffers;
     }
+
+    // map class methods to singleton
+    *resetBuffers { singleton.resetBuffers }
+    *getBuffer    { singleton.getBuffer }
+    *numBuffers   { |nb| singleton.numBuffers(nb) }
+    *numFrames    { |nf| singleton.numFrames(nf) }
+    *numChannels  { |nf| singleton.numChannels(nf) }
 }
