@@ -2,7 +2,7 @@ AutoFilter {
     *ar { 
         arg input,
         cutoff = 16000, rez = 0.5, type = 0,
-        lfoAmt = 0, lfoRate = 1, lfoPhase = 0, lfoOffset = 0, lfoShape = 0, 
+        lfoRate = 1, lfoAmt = 0, lfoPhase = 0, lfoOffset = 0, lfoShape = 0, 
         lfoStep = 0, lfoStepRate = 1,
         ampFollowAmt = 0, ampFollowAttack = 0.01, ampFollowDecay = 0.01,
         sidechain, tempo, 
