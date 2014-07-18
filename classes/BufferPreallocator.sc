@@ -10,7 +10,10 @@ BufferPreallocator {
 	
     *initClass {
         StartUp.add {
-            singleton = BufferPreallocator();
+            Server.default.onBootAdd({
+                "Preallocating buffers for Buffer Preallocator".postln;
+                singleton = BufferPreallocator();
+            });
         }
     }
 
@@ -26,6 +29,7 @@ BufferPreallocator {
 	    this.resetBuffers;	
     }
 
+    // free all buffers and reinitialise them
 	resetBuffers {
         buffers.do { |b| b.free };
         
@@ -57,6 +61,10 @@ BufferPreallocator {
     numChannels_ { |nc=2|
         numChannels = nc;
         this.resetBuffers;
+    }
+
+    doOnServerBoot {
+        
     }
 
     // map class methods to singleton

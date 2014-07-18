@@ -1,12 +1,14 @@
 // Modified PingPong with BPF in signal chain
 PingPongDelay {
-    *ar { |input delayTime=1 feedback=0.7 cutoff=2000 rez=1 dryWet=1 tempo|
+    *ar { 
+        arg input, 
+        delayTime=1, feedback=0.7, 
+        cutoff=2000, rez=1, 
+        glide=1, dryWet=1, tempo;
 
-        var buffer, delaySamps, phase, 
+        var buffer, delaySamps, phase, dry,
         feedbackChannels, delayedSignals, rotatedDelayed, frames;
        
-        var dry;
-
         tempo = tempo ?? { TempoSyncUtility.searchForTempo };
 
         // add a fade in line to dull glitches when swapped in and out.
@@ -18,12 +20,17 @@ PingPongDelay {
         // filter the input
         input = BPF.ar(input, cutoff, rez);
 
-        // set up a local buffer for storing delayed signal
-        buffer = LocalBuf(44100 * 8, 2);
+        // get a buffer for storing delayed signal
+        buffer = BufferPreallocator.getBuffer;
         frames = BufFrames.kr(buffer);
 
         // compensate for control rate delay added by LocalIn
-        delaySamps = max(0, delayTime * SampleRate.ir - ControlDur.ir / tempo).round;
+        delaySamps = max(
+            0, delayTime * SampleRate.ir - ControlDur.ir / tempo
+        ).round;
+
+        // glide delay time for cheap pitch bend effect
+        delaySamps.lag(glide);
 
         // read/write head "on tape" - acts as drive for read/write operations
 		phase = Phasor.ar(0, 1, 0, frames);
