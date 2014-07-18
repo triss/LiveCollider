@@ -1,19 +1,16 @@
 AutoFilter {
     *ar { 
         arg input,
-        
         cutoff = 16000, rez = 0.5, type = 0,
-        
         lfoAmt = 0, lfoRate = 1, lfoPhase = 0, lfoOffset = 0, lfoShape = 0, 
-
         lfoStep = 0, lfoStepRate = 1,
-
         ampFollowAmt = 0, ampFollowAttack = 0.01, ampFollowDecay = 0.01,
-        
-        sidechain, tempo, mul = 1, add = 0;
+        sidechain, tempo, 
+        mul = 1, add = 0;
 
         var lfo, ampFollower, ampTrig, sig;
 
+        // create a nice phasing tempo-sync'd lfo
         lfo = PhaseLfoTS.kr(
             lfoRate, lfoPhase, lfoOffset, lfoShape, tempo, lfoAmt
         );
@@ -39,6 +36,7 @@ AutoFilter {
             ampFollower + lfo + \safeFilter.asSpec.unmap(cutoff) 
         );
 
+        // select between filter types
         sig = SelectX.ar(type, [
             RLPF.ar(input, cutoff, rez),
             BPF.ar(input, cutoff, rez),
@@ -63,38 +61,44 @@ AutoPan {
     }
 }
 
-BeatRepeat { }
+//BeatRepeat { }
+//
+//Chorus { }
+//
+//Compressor {  }
+//
+//Corpus {  }
+//
+//DynamicTube {}
+//
+//EQ8 {}
+//
+//EQ3 {}
+//
+//Erosion {}
+//
+//FilterDelay {}
+//
+//Flanger {}
+//
+//FrequencyShifter {}
+//
+//GateFX {}
+//
+//GrainDelay {}
+//
+//Overdrive {}
+//
+//Phaser {}
+//
+//PingPongDelay {}
+//
+//Saturator {}
 
-Chorus { }
+SimpleDelay { 
+    *ar { |input delayTime=0.5 feedback=0.5 glide=0.1 tempo mul=1 add=0|
+        tempo = tempo ?? { TempoSyncUtility.searchForTempo };
 
-Compressor {  }
-
-Corpus {  }
-
-DynamicTube {}
-
-EQ8 {}
-
-EQ3 {}
-
-Erosion {}
-
-FilterDelay {}
-
-Flanger {}
-
-FrequencyShifter {}
-
-GateFX {}
-
-GrainDelay {}
-
-Overdrive {}
-
-Phaser {}
-
-PingPongDelay {}
-
-Saturator {}
-
-SimpleDelay {}
+        ^CombC.ar(input, 4, (delayTime / tempo).lag(glide), feedback / tempo);
+    }
+}
