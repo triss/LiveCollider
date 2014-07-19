@@ -5,7 +5,7 @@ BeatRepeat {
         rate=1, filter=1, cutoff=16000, rez=1, amp=1, decay=1, 
         mixInsertGate=0, tempo;
 
-        var buffer, repeatsGate, repeatTrig, repeatStart, 
+        var buffer, repeatsGate, repeatsGateTrig, repeatTrig, repeatStart, 
         startPos, recordHead, env, repeats;
 
         tempo = tempo ?? { TempoSyncUtility.searchForTempo };
@@ -21,22 +21,24 @@ BeatRepeat {
 
         // a gate signal with interval of interval, and chance chance of being
         // triggered
-        repeatsGate = Trig1.ar(
-            CoinGate.ar(
-                chance, ImpulseTS.ar(interval, offset * 2pi, tempo)
-            ), 
-            dur: gate / tempo
+        repeatsGateTrig = CoinGate.ar(
+            chance, ImpulseTS.ar(interval, offset * 2pi, tempo)
         );
 
+        repeatsGate = Trig1.ar(repeatsGateTrig, gate / tempo);
+
         // grab playhead pos everytime repeatsGate triggers
-        startPos = Latch.ar(recordHead, repeatsGate);
+        startPos = Latch.ar(recordHead, repeatsGateTrig);
 
         // repeating trigger
-        repeatTrig = ImpulseTS.ar(grid, 0, tempo) * repeatsGate;
+        repeatTrig = repeatsGate 
+        //- Trig1.ar(repeatsGateTrig, 0.01) 
+        * ImpulseTS.ar(grid, 0, tempo);
 
         // envelope applied to each slice to stop popping
         env = EnvGen.ar(
-            Env.linen(0.001, rate / tempo - 0.002, 0.001), repeatTrig
+            Env.linen(0.001, grid / tempo * rate - 0.002, 0.001), 
+            repeatTrig
         );
 
         // play back repeated section from button
@@ -52,8 +54,13 @@ BeatRepeat {
 
         // select betweem mix, insert and gate mode
         ^SelectX.ar(mixInsertGate, [
+            // mix
             repeats + input,
-            -1 * repeatsGate.lag(0.001) * input + repeats,
+
+            // insert
+            (-1 * repeatsGate).lag(0.003) * input + repeats,
+
+            // just repeats
             repeats
         ]);
     }
