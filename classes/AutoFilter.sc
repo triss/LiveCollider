@@ -17,7 +17,7 @@ AutoFilter {
 
         // if lfo step is engaged step the lfo
         lfo = if(lfoStep == 1) {
-            Latch.kr(lfo, ImpulseTS.kr(lfoStepRate));
+            Latch.kr(lfo, ImpulseTS.kr(lfoStepRate, 0, tempo));
         } {
             lfo;
         };
