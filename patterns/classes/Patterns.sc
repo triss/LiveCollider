@@ -26,28 +26,28 @@ Pnfv {
 }
 
 Psampler {
-    initClass {
+    *initClass {
         StartUp.add {
             // differing 
             var synthDefSpecs = (
                 tsampler: (
                     numChannels: 1, 
-                    panner: { |sig pan| Pan2.ar(sig, pan) }
+                    panner: { |e sig pan| Pan2.ar(sig, pan) }
                 ),
                 tsampler2: (
                     numChannels: 2, 
-                    panner: { |sig pan| Pan2.ar(sig, pan) }
+                    panner: { |e sig pan| Pan2.ar(sig, pan) }
                 ),
                 tsampler6: (
                     numChannels: 6, 
-                    panner: { |sig pan| Splay.ar(sig, center: pan) }
+                    panner: { |e sig pan| Splay.ar(sig, center: pan) }
                 )
             );
-            
+           
             synthDefSpecs.keysValuesDo { |name spec|         
                 // set up sampler synth for use with Psamp
                 SynthDef(name, {
-                    arg out = 0, buffer = 0, amp = 1, pan = 0,  rate = 1, start = 0,
+                    arg out = 0, buffer = 0, amp = 1, pan = 0, rate = 1, start = 0,
                     attack = 0, sustain = 1, release = 0.001;
 
                     var sig, env;
@@ -83,7 +83,7 @@ Psampler {
 
                 // all controls at initialisation rate since these samplers are
                 // taylored to short samplers 
-                rates: \ir ! 9,
+                //rates: \ir ! 9,
 
                 metadata: (specs: (
                     buffer: [0, 1024, \lin, 1].asSpec,
@@ -96,35 +96,35 @@ Psampler {
                     sustain: [0, 60],
                     release: \unipolar
                 ))).add;
-            } 
+            };
+
+            Event.addEventType(
+                \tsampler,  { |server|
+                    // choose instrument based on number of channels in buffer
+                    ~instrument = switch(~buffer.numChannels,
+                        1, { \tsampler },
+                        2, { \tsampler2 },
+                        6, { \tsampler6 }, // I have the odd six channel sound files!
+                        { ("The tsampler eventType does not how to play buffers with" 
+                        + ~buffer.numChannels + "channels.").error; }
+                    );
+
+                    // if a note has been specified? does degree stuff work?
+                    if(~note.notNil) {
+                        ~rate = ~rate.value ?? 1 * ~note.value.midiratio
+                    };
+
+                    // use normal note type to trigger event
+                    ~type = \note;
+
+                    // trigger the event
+                    currentEnvironment.play;
+                }
+            );
         };
-
-        Event.addEventType(
-            \tsampler,  { |server|
-                // choose instrument based on number of channels in buffer
-                ~instrument = switch(~buffer.numChannels,
-                    1, { \tsampler },
-                    2, { \tsampler2 },
-                    6, { \tsampler6 }, // I have the odd six channel sound files!
-                    { ("The tsampler eventType does not how to play buffers with" 
-                    + ~buffer.numChannels + "channels.").error; }
-                );
-
-                // if a note has been specified? does degree stuff work?
-                if(~note.notNil) {
-                    ~rate = ~rate ?? 1 * ~note.midiratio
-                };
-
-                // use normal note type to trigger event
-                ~type = \note;
-
-                // trigger the event
-                currentEnvironment.play;
-            }
-        );
     }
 
     *new { |bufferPattern...args|
-        ^Pbind(\instrument, \tsampler, \buffer, bufferPattern, *args);
+        ^Pbind(\type, \tsampler, \buffer, bufferPattern, *args);
     }
 }
