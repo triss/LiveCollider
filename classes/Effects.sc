@@ -1,7 +1,5 @@
 
 
-//BeatRepeat { }
-//
 //Chorus { }
 //
 //Compressor {  }
