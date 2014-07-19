@@ -32,7 +32,7 @@ BeatRepeat {
 
         // repeating trigger
         repeatTrig = repeatsGate 
-        //- Trig1.ar(repeatsGateTrig, 0.01) 
+        - Trig1.ar(repeatsGateTrig, 0.01) 
         * ImpulseTS.ar(grid, 0, tempo);
 
         // envelope applied to each slice to stop popping
