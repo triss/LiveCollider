@@ -65,7 +65,7 @@ Psampler {
                     buffer: [0, 1024, \lin, 1].asSpec,
                     out: \audiobus, 
                     amp: \amp,
-                    pan: \pan,se spikes in CPU performance and should be considered when using several of these units.
+                    pan: \pan,
                     rate: [-8, 8, \exp, 0, 1].asSpec,
                     start: \unipolar,
                     attack: \unipolar,
