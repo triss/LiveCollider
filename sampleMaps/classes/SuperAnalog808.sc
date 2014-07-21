@@ -1,5 +1,6 @@
 // Makes loading of 808 sample sets quick
 SuperAnalog808 : SampleMap {
+    // slightly distorted kicks/snares etc.
     *loadFatEMPEQ { 
         arg root = "~/samples/goldbaby/SuperAnalog808_Samples/";
 
@@ -48,6 +49,7 @@ SuperAnalog808 : SampleMap {
         ^this.createBufferCollection(root, paths);    
     }
 
+    // nice clean tapey goodness
     *loadEMPEQ {
         arg root = "~/samples/goldbaby/SuperAnalog808_Samples/";
 
@@ -95,6 +97,7 @@ SuperAnalog808 : SampleMap {
         ^this.createBufferCollection(root, paths);    
     }
 
+    // Chaos!
     *loadPatchChaos {
         arg root = "~/samples/goldbaby/SuperAnalog808_Samples/";
 

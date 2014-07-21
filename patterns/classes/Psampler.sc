@@ -1,9 +1,8 @@
 Psampler {
     *initClass {
         StartUp.add {
-            // we'll need a different synth dependant on the number of channels
-            // in buffer to be played  and differing panning methods dependant 
-            // on this
+            // we'll need a different synth and differing panning methods 
+            // dependant on the number of channels in buffer to be played 
             var synthDefSpecs = (
                 tsampler: (
                     numChannels: 1, 
