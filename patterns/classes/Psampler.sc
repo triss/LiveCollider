@@ -63,7 +63,7 @@ Psampler {
                 metadata: (specs: (
                     buffer: [0, 1024, \lin, 1].asSpec,
                     out: \audiobus, 
-                    amp: \amp,
+                    amp: [0, 1],
                     pan: \pan,
                     rate: [-8, 8, \exp, 0, 1].asSpec,
                     start: \unipolar,
@@ -77,19 +77,27 @@ Psampler {
         Event.addEventType(
             \tsampler,  { |server|
                 // choose instrument based on number of channels in buffer
-                ~instrument = switch(~buffer.numChannels,
-                    1, { \tsampler },
-                    2, { \tsampler2 },
-                    6, { \tsampler6 }, // I have the odd six channel sound files!
-                    { ("The tsampler eventType does not how to play buffers with" 
-                    + ~buffer.numChannels + "channels.").error; }
-                );
+                ~instrument = ~buffer.asArray.collect { |b| 
+                    switch(b.numChannels,
+                        1, { \tsampler },
+                        2, { \tsampler2 },
+                        6, { \tsampler6 }, // I have the odd six channel sound files!
+                        { ("The tsampler eventType does not how to play buffers with" 
+                        + b.numChannels + "channels.").error; }
+                    );
+                };
+
+                // evaluate all the functions that are lurking in this event
+                currentEnvironment.keysValuesChange { |k v| v.value };
 
                 // use normal note type to trigger event
                 ~type = \note;
 
-                // trigger the event
-                currentEnvironment.play;
+                // play a seperate event for each note in chord since SC 
+                // doesn't support multiple instruments in one event
+                currentEnvironment.getPairs.flop.do { |a|
+                    var e = Event.newFrom(a).play;
+                };
             }
         );
     }

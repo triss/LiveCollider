@@ -2,7 +2,7 @@ Pmsampler {
     *initClass {
          Event.addEventType(
             \tmsampler,  { |server|
-                var nearestNote;
+                var nearestNotes;
 
                 // if no \multi key in event throw an error
                 if(~multi.isNil) {
@@ -10,18 +10,19 @@ Pmsampler {
                     "multisample collection under the 'multi' key").error;
                 };
 
-                // look up the nearest note with a buffer assigned to it
-                nearestNote = ~midinote.value.nearestInList(~multi.keys.asArray);
+                // look up the nearest notes with a buffer assigned to them
+                nearestNotes = ~midinote.value.asArray.collect { |mn|
+                    mn.nearestInList(~multi.keys.asArray);
+                };
 
-                // load up the buffer located there
-                ~buffer = ~multi[nearestNote];
-                
-                // handle round robin if in sample map
-                ~buffer = ~buffer.asArray.choose;
+                // load up the buffers located there
+                ~buffer = nearestNotes.collect { |nn| 
+                    ~multi[nn].asArray.choose 
+                };
 
                 // calculate how much it needs to be repitched whilst still 
                 // multiplying by previously specified rate if any
-                ~rate = ~rate ?? 1 * (~midinote - nearestNote).midiratio;
+                ~rate = ~rate ?? 1 * (~midinote - nearestNotes).midiratio;
 
                 // use tsampler event type for everything else see Psampler
                 ~type = \tsampler;
