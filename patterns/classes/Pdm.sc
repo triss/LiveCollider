@@ -23,9 +23,14 @@ LiveSpace : ProxySpace {
 }
 
 Pdm : NodeProxy {
+    // drum track ordering for output of this nodeproxy
     var dmtOrdering;
 
+    // a proxy space that holds all the seperate tracks
     var dmtSpace;
+
+    // a cache of the uincoming patterns for when everything needs rebuilding
+    var patternCache;
 
     // the drum map to use
     var drumMapProxy;
@@ -43,6 +48,8 @@ Pdm : NodeProxy {
 
     initPdm { |drumMap|
         this.quant = 4;
+
+        patternCache = IdentityDictionary();
 
         drumMapProxy = PatternProxy(drumMap);
 
@@ -67,63 +74,74 @@ Pdm : NodeProxy {
         dmtOrdering = IdentitySet();
     }
 
+    reconstructPatterns {
+        patternCache.keysValuesDo { |k p| this.setTrack(k, p) };
+    }
+
+    setTrack { |trackName pattern|
+        patternCache[trackName] = pattern;
+
+        // if the pattern is given as an event type thing
+        if(pattern.respondsTo(\keysValuesDo)) {
+            var pbindArgs, trackNumber;
+
+            pbindArgs = pattern;
+
+            // wrap arrays up any arrays as Pseq's as convienace since
+            // chords would rarely be fed to a drum machine
+            pbindArgs.keysValuesChange { |k obj|
+                if(obj.isArray) {
+                    Pseq(obj, inf);
+                } {
+                    obj
+                }
+            };
+
+            pbindArgs.make {
+                // ensure the following keys are set for the pattern
+
+                // use the drum machines default drum map
+                ~drums = ~drums.value ?? drumMapProxy;
+
+                // look up the buffer name based on the selector
+                ~buffer = ~buffer.value ?? trackName;
+
+                // multiply amp by accents
+                ~amp = (~amp.value ?? 0.5) * accentsProxy;
+
+                // set up swing
+                ~swingAmount = ~swingAmount.value ?? swingAmountProxy;
+                ~swingBase = ~swingBase.value ?? swingBaseProxy;
+
+                // TODO: hmmm Pfindur doesn't take patterns?
+                ~length = ~length.value ?? length.postln;
+
+                // use the pdmtsampler event type
+                ~type = \pdmtsampler;
+            };
+
+            // create the accented and swung drum track
+            dmtSpace[trackName] = 
+                Pnfd(max(length, pbindArgs[\length]),
+                    Pnfd(pbindArgs[\length], 
+                    Pswing(Pbind(*pbindArgs.getPairs)
+                )));
+
+            // work out which slot in our outProxy this dmt consume
+            dmtOrdering.add(trackName);
+            trackNumber = dmtOrdering.array.indexOf(trackName);
+
+            // add the track to the out proxy
+            this[trackNumber] = dmtSpace[trackName];
+        }
+    }
+
     doesNotUnderstand { |selector...args| 
         // if we're setting a drum track
         if(selector.isSetter) {
-            // if the first argument is an event type thing
-            if(args[0].respondsTo(\keysValuesDo)) {
-                var pbindArgs, trackName, trackNumber;
-
-                pbindArgs = args[0];
-                trackName = selector.asGetter;
-
-                pbindArgs.keysValuesChange { |k obj|
-                    if(obj.isArray) {
-                        Pseq(obj, inf);
-                    } {
-                        obj
-                    }
-                };
-
-                pbindArgs.make {
-                    // ensure the following keys are set for the pattern
-
-                    // use the drum machines default drum map
-                    ~drums = ~drums.value ?? drumMapProxy;
-
-                    // look up the buffer name based on the selector
-                    ~buffer = ~buffer.value ?? trackName;
-
-                    // multiply amp by accents
-                    ~amp = (~amp.value ?? 0.5) * accentsProxy;
-
-                    // set up swing
-                    ~swingAmount = ~swingAmount.value ?? swingAmountProxy;
-                    ~swingBase = ~swingBase.value ?? swingBaseProxy;
-
-                    // TODO: hmmm Pfindur doesn't take patterns?
-                    ~length = ~length.value ?? length.postln;
-
-                    // use the pdmtsampler event type
-                    ~type = \pdmtsampler;
-                };
-
-                // create the accented and swung drum track
-                dmtSpace[trackName] = 
-                    Pnfd(max(length, pbindArgs[\length]),
-                        Pnfd(pbindArgs[\length], 
-                        Pswing(Pbind(*pbindArgs.getPairs)
-                    )));
-
-                // work out which slot in our outProxy this dmt consume
-                dmtOrdering.add(trackName);
-                trackNumber = dmtOrdering.array.indexOf(trackName);
-
-                // add the track to the out proxy
-                this[trackNumber] = dmtSpace[trackName];
-            }
+            this.setTrack(selector.asGetter, args[0]);
         } {
-            ^dmtSpace[selector]
+            ^dmtSpace[selector];
         }
     }
 
@@ -132,8 +150,11 @@ Pdm : NodeProxy {
     accentAmount_ { |amt| accentAmountProxy.source = amt }     
     swingAmount_ { |amt| swingAmountProxy.source = amt }
     swingBase_ { |base| swingBaseProxy.source = base }
-    length_ { |l| length= l }
     drumMap_ { |dm| drumMapProxy.source = dm }
+
+    // length doesn't just use PatternProxy's since Pfindur can't have dur 
+    // updated
+    length_ { |l| length = l; this.reconstructPatterns }
 
     // and getters
     accents { ^accentsProxy.source }
