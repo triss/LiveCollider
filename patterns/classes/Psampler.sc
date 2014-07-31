@@ -84,11 +84,6 @@ Psampler {
                         + ~buffer.numChannels + "channels.").error; }
                     );
 
-                    // if a note has been specified? does degree stuff work?
-                    if(~note.notNil) {
-                        ~rate = ~rate.value ?? 1 * ~note.value.midiratio
-                    };
-
                     // use normal note type to trigger event
                     ~type = \note;
 

@@ -8,15 +8,6 @@ TempoSyncUtility {
     }
 }
 
-ProxySpaceTS : ProxySpace {
-    tempo_ { |tempo|
-        this.clock.tempo = tempo;
-        this.put(\tempo, tempo);
-    }
-
-    tempo { ^this.clock.tempo }
-}
-
 ImpulseTS {
     *kr { |freq=1 phase=0 tempo mul=1 add=0|
         tempo = tempo ?? { TempoSyncUtility.searchForTempo };
