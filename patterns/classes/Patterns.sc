@@ -6,7 +6,7 @@ Pnfindur {
 }
 
 Pnfinval {
-   *new { |n pattern repeats|
+    *new { |n pattern repeats|
         repeats = repeats ?? inf;
         ^Pn(Pfinval(n, pattern), repeats);
     }

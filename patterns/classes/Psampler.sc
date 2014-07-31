@@ -72,26 +72,26 @@ Psampler {
                     release: \unipolar
                 ))).add;
             };
-
-            Event.addEventType(
-                \tsampler,  { |server|
-                    // choose instrument based on number of channels in buffer
-                    ~instrument = switch(~buffer.numChannels,
-                        1, { \tsampler },
-                        2, { \tsampler2 },
-                        6, { \tsampler6 }, // I have the odd six channel sound files!
-                        { ("The tsampler eventType does not how to play buffers with" 
-                        + ~buffer.numChannels + "channels.").error; }
-                    );
-
-                    // use normal note type to trigger event
-                    ~type = \note;
-
-                    // trigger the event
-                    currentEnvironment.play;
-                }
-            );
         };
+
+        Event.addEventType(
+            \tsampler,  { |server|
+                // choose instrument based on number of channels in buffer
+                ~instrument = switch(~buffer.numChannels,
+                    1, { \tsampler },
+                    2, { \tsampler2 },
+                    6, { \tsampler6 }, // I have the odd six channel sound files!
+                    { ("The tsampler eventType does not how to play buffers with" 
+                    + ~buffer.numChannels + "channels.").error; }
+                );
+
+                // use normal note type to trigger event
+                ~type = \note;
+
+                // trigger the event
+                currentEnvironment.play;
+            }
+        );
     }
 
     *new { |bufferPattern...args|

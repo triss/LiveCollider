@@ -145,41 +145,39 @@ Pdm : NodeProxy {
 
 Pdmt {
     *initClass {
-        StartUp.add {
-            Event.addEventType(
-                \pdmtsampler,  {
-                    // if a note has been specified? does degree stuff work?
-                    if(~note.notNil) {
-                        ~rate = ~rate.value ?? 1 * ~note.value.midiratio
-                    };
+        Event.addEventType(
+            \pdmtsampler,  {
+                // if a note has been specified? does degree stuff work?
+                if(~note.notNil) {
+                    ~rate = ~rate.value ?? 1 * ~note.value.midiratio
+                };
 
-                    // if buffer is an array of values
-                    ~buffer = if(~buffer.value.isArray) {
-                        // collect up all the buffers refernced in the array
-                        ~buffer.value.collect { |b|
-                            if(~drums.value.isArray) {
-                                ~drums.value[b].choose;
-                            } {
-                                ~drums.value[b]; 
-                            }
-                        }
-                    } {
-                        if(~drums.value[~buffer.value].isArray) {
-                            // otherwise just look up the one
-                            ~drums.value[~buffer.value].choose;
+                // if buffer is an array of values
+                ~buffer = if(~buffer.value.isArray) {
+                    // collect up all the buffers refernced in the array
+                    ~buffer.value.collect { |b|
+                        if(~drums.value.isArray) {
+                            ~drums.value[b].choose;
                         } {
-                            ~drums.value[~buffer.value];
+                            ~drums.value[b]; 
                         }
-                    };
+                    }
+                } {
+                    if(~drums.value[~buffer.value].isArray) {
+                        // otherwise just look up the one
+                        ~drums.value[~buffer.value].choose;
+                    } {
+                        ~drums.value[~buffer.value];
+                    }
+                };
 
-                    // set event type to \tsampler for further processing
-                    ~type = \tsampler;
+                // set event type to \tsampler for further processing
+                ~type = \tsampler;
 
-                    // trigger the event
-                    currentEnvironment.play;
-                }
-            );
-        };
+                // trigger the event
+                currentEnvironment.play;
+            }
+        );
     }
     
     *new { |drums bufferPattern...args|
