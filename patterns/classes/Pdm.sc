@@ -101,20 +101,20 @@ Pdm : NodeProxy {
                 // ensure the following keys are set for the pattern
 
                 // use the drum machines default drum map
-                ~drums = ~drums.value ?? drumMapProxy;
+                ~drums = ~drums ?? drumMapProxy;
 
                 // look up the buffer name based on the selector
-                ~buffer = ~buffer.value ?? trackName;
+                ~buffer = ~buffer ?? trackName;
 
                 // multiply amp by accents
-                ~amp = (~amp.value ?? 0.5) * accentsProxy;
+                ~amp = (~amp ?? 0.5) * accentsProxy;
 
                 // set up swing
-                ~swingAmount = ~swingAmount.value ?? swingAmountProxy;
-                ~swingBase = ~swingBase.value ?? swingBaseProxy;
+                ~swingAmount = ~swingAmount ?? swingAmountProxy;
+                ~swingBase = ~swingBase ?? swingBaseProxy;
 
                 // TODO: hmmm Pfindur doesn't take patterns?
-                ~length = ~length.value ?? length.postln;
+                ~length = ~length ?? length.postln;
 
                 // use the pdmtsampler event type
                 ~type = \pdmtsampler;
@@ -170,7 +170,7 @@ Pdmt {
             \pdmtsampler,  {
                 // if a note has been specified? does degree stuff work?
                 if(~note.notNil) {
-                    ~rate = ~rate.value ?? 1 * ~note.value.midiratio
+                    ~rate = ~rate ?? 1 * ~note.midiratio
                 };
 
                 // map buffer names to buffers
