@@ -173,23 +173,10 @@ Pdmt {
                     ~rate = ~rate.value ?? 1 * ~note.value.midiratio
                 };
 
-                // if buffer is an array of values
-                ~buffer = if(~buffer.value.isArray) {
-                    // collect up all the buffers refernced in the array
-                    ~buffer.value.collect { |b|
-                        if(~drums.value.isArray) {
-                            ~drums.value[b].choose;
-                        } {
-                            ~drums.value[b]; 
-                        }
-                    }
-                } {
-                    if(~drums.value[~buffer.value].isArray) {
-                        // otherwise just look up the one
-                        ~drums.value[~buffer.value].choose;
-                    } {
-                        ~drums.value[~buffer.value];
-                    }
+                // map buffer names to buffers
+                ~buffer = ~buffer.asArray.collect { |name|
+                    // if drum map contains round robin this handles it
+                    ~drums[name].asArray.choose;
                 };
 
                 // set event type to \tsampler for further processing
