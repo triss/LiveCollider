@@ -96,7 +96,7 @@ Psampler {
                 // play a seperate event for each note in chord since SC 
                 // doesn't support multiple instruments in one event
                 currentEnvironment.getPairs.flop.do { |a|
-                    var e = Event.newFrom(a).play;
+                    Event.newFrom(a).play;
                 };
             }
         );
