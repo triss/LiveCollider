@@ -13,6 +13,7 @@ Chord {
             dim7:           #[0, 3, 6, 9],
             1:              #[0],
             5:              #[0, 7],
+            plus:           #[0, 4, 8],
             sharp5:         #[0, 4, 8],
             msharp5:        #[0, 3, 8],
             sus2:           #[0, 2, 7],
@@ -71,24 +72,47 @@ Chord {
     }
 
     *fromName { |c|
+        var over, chord;
+
+        c = c.asString;
+
+        if(c.contains("_")) {
+            #c, over = c.split($\_);
+        };
+
         // if we know the chord name return it
-        ^if(chords.includesKey(c)) {
+        chord = if(chords.includesKey(c)) {
             chords[c];
         } {
-            var shape, note;
+            var shape, note, noteLen = 1;
 
-            shape = chords[c.asString.drop(1).asSymbol] 
-                 ?? chords[c.asString.drop(2).asSymbol]
+            shape = chords[c.drop(1).asSymbol] 
+                 ?? { noteLen = 2; chords[c.drop(2).asSymbol] }
+                 ?? { noteLen = 3; chords[c.drop(3).asSymbol] }
                  ?? { ("Defaulting to major chord!").warn; chords.major };
 
-            note = Note(c.asString.keep(2)) ?? Note(c.asString.keep(1));
+            note = Note(c.keep(noteLen));
 
             note + shape;
-        }
+        };
+
+        chord = if(over.notNil) {
+            chord.collect { |note|
+                if((note % 12) < Note(over)) {
+                    note + 12
+                } {
+                    note
+                }
+            }
+        } {
+            chord;
+        };
+
+        ^chord.sort;
     }
 
     *new { |c|
-        Chord.fromName(c);
+        ^this.fromName(c);
     }
 }
 
@@ -106,7 +130,18 @@ Note {
         };
     }
 
-    *new { |n|
-        ^notes[n.asString.toLower.asSymbol];
+    *new { |name|
+        var octaveShift = 0;
+        name = name.asString.toLower;
+
+        // if octave specified chop it off and use it
+        if(name.last.isDecDigit) {
+            octaveShift = name.last.digit * 12 + 12; 
+            name = name.drop(-1);
+        };
+
+        ^notes[name.asSymbol] + octaveShift;
     }
+
+    *noteName { |n| ^notes.findKeyForValue(n % 12) }
 }
