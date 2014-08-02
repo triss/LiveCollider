@@ -1,4 +1,5 @@
 Resample {
+    // records np for length beats starting at quant 
     *nodeProxy { |np length=4 quant=4|
         var frames;
 
