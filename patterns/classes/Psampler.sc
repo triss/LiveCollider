@@ -95,8 +95,10 @@ Psampler {
 
                 // play a seperate event for each note in chord since SC 
                 // doesn't support multiple instruments in one event
-                currentEnvironment.getPairs.flop.do { |a|
-                    Event.newFrom(a).play;
+                currentEnvironment.getPairs.flop.do { |a i|
+                    var e = Event.newFrom(a);
+                    e[\timingOffset] = ~strum.value * i;
+                    e.play;
                 };
             }
         );
