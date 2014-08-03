@@ -67,8 +67,12 @@ Chord {
 
     *progression { |array| 
         ^array.collect { |c| 
-            this.fromName(c);
-        };
+            if(c.isKindOf(Symbol)) {
+                this.fromName(c); 
+            } {
+                c
+            }
+        }
     }
 
     *fromName { |c|
