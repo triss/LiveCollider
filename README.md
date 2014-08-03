@@ -1,4 +1,10 @@
 LiveCollider
 ============
 
-Imitations of some Ableton Live's suite of effects and vague allusions to some of its instruments written for SuperCollider
+* Tempo Sychronised pseudo ugens
+* Imitations of Live's effects
+* Patterns
+  * Drum machine notation
+  * Event types and associated patterns for sample playback
+  * Support for simple chord notation system 
+
