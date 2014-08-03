@@ -2,7 +2,7 @@
 // within it
 Pprob {
     *new { |pattern|
-        Pchain(
+        ^Pchain(
             // randomly insert rests with prob from parent pattern
             Pfunc({ |e| if(e.prob.coin) { e } { e.note = \ } }),
             pattern
