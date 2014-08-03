@@ -13,13 +13,13 @@ SampleMap {
         ^buffers;
     }
 
-    *loadSonatinaSfv { |path|
+    *loadSonatinaSfz { |path|
         var map = ();
+
+        path = path.standardizePath;
 
         File.use(path, "r", { |f|
             var root, sampleNote, samplePath;
-
-            path = path.standardizePath;
 
             root = PathName(path).pathOnly;
 
