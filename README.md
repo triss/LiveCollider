@@ -11,6 +11,8 @@ LiveCollider
     ```\m, \M \m7sharp5flat9, \dom7, ```
     * inversions
     ```\C_g, \G, \F, \C_g, \G, \F, \Am_c, \Dm_f, \Em, \Am_e, \Dm_f, \Em, \C_e```
+  * work with stereo/mono/multichannel samplers from the same patterns
+    \tmsampler, \tsampler event types and Pmsampler and Psampler
 
 * drum machine notation
   * event types, patterns and synths for sample playback
