@@ -1,27 +1,3 @@
-LiveSpace : ProxySpace {
-    *new { |server name clock|
-        server = server ?? Server.default;
-        clock = clock ?? TempoClock.default;
-
-        ^super.new(server, name, clock).tempo_(clock.tempo);
-    }
-
-    put { |key obj| 
-        if(obj.isKindOf(NodeProxy)) {
-            envir[key] = obj;
-        } {
-            super.put(key, obj);
-        }
-    }
-
-    tempo_ { |tempo|
-        clock.tempo = tempo;
-        this.put(\tempo, tempo);
-    }
-
-    tempo { ^this.clock.tempo }
-}
-
 Pdm : NodeProxy {
     // drum track ordering for output of this nodeproxy
     var dmtOrdering;
@@ -79,6 +55,8 @@ Pdm : NodeProxy {
     }
 
     setTrack { |trackName pattern|
+        // cache the pattern in case it needs to be rebuilt (when things like
+        // bar length get updated)
         patternCache[trackName] = pattern;
 
         // if the pattern is given as an event type thing
