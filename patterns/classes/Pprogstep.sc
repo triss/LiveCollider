@@ -1,6 +1,6 @@
 // steps through progression
 Pprogstep {
-    *new { |prog durs=4 repeats=1|
+    *new { |prog durs=4 repeats=inf|
         ^Pstep(Pprog(prog), Pseq([durs], inf), repeats)
     }
 }

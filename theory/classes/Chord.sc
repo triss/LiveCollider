@@ -11,14 +11,14 @@ Chord {
             aug:            #[0, 4, 8],
             dim:            #[0, 3, 6],
             dim7:           #[0, 3, 6, 9],
-            1:              #[0],
-            5:              #[0, 7],
+            '1':            #[0],
+            '5':            #[0, 7],
             plus:           #[0, 4, 8],
             sharp5:         #[0, 4, 8],
             msharp5:        #[0, 3, 8],
             sus2:           #[0, 2, 7],
             sus4:           #[0, 5, 7],
-            6:              #[0, 4, 7, 9],
+            '6':            #[0, 4, 7, 9],
             m6:             #[0, 3, 7, 9],
             '7sus2':        #[0, 2, 7, 10],
             '7sus4':        #[0, 5, 7, 10],
@@ -26,7 +26,7 @@ Chord {
             m7flat5:        #[0, 3, 6, 10],
             '7sharp5':      #[0, 4, 8, 10],
             m7sharp5:       #[0, 3, 8, 10],
-            9:              #[0, 4, 7, 10, 14],
+            '9':            #[0, 4, 7, 10, 14],
             m9:             #[0, 3, 7, 10, 14],
             m7sharp9:       #[0, 3, 7, 10, 14],
             maj9:           #[0, 4, 7, 11, 14],
@@ -40,12 +40,12 @@ Chord {
             m9sharp5:       #[0, 1, 14],
             '7sharp5flat9': #[0, 4, 8, 10, 13],
             m7sharp5flat9:  #[0, 3, 8, 10, 13],
-            11:             #[0, 4, 7, 10, 14, 17],
+            '11':           #[0, 4, 7, 10, 14, 17],
             m11:            #[0, 3, 7, 10, 14, 17],
             maj11:          #[0, 4, 7, 11, 14, 17],
             '11sharp':      #[0, 4, 7, 10, 14, 18],
             m11sharp:       #[0, 3, 7, 10, 14, 18],
-            13:             #[0, 4, 7, 10, 14, 17, 21],
+            '13':           #[0, 4, 7, 10, 14, 17, 21],
             m13:            #[0, 3, 7, 10, 14, 17, 21]
         );
 
@@ -66,53 +66,51 @@ Chord {
     }
 
     *progression { |array| 
-        ^array.collect { |c| 
-            if(c.isKindOf(Symbol)) {
-                this.fromName(c); 
-            } {
-                c
-            }
-        }
+        ^array.collect { |c| this.fromName(c) };
     }
 
     *fromName { |c|
-        var over, chord;
+        ^if(c.isKindOf(Symbol)) {
+            var over, chord;
 
-        c = c.asString;
+            c = c.asString;
 
-        if(c.contains("_")) {
-            #c, over = c.split($\_);
-        };
+            if(c.contains("_")) {
+                #c, over = c.split($\_);
+            };
 
-        // if we know the chord name return it
-        chord = if(chords.includesKey(c)) {
-            chords[c];
-        } {
-            var shape, note, noteLen = 1;
+            // if we know the chord name return it
+            chord = if(chords.includesKey(c)) {
+                chords[c];
+            } {
+                var shape, note, noteLen = 1;
 
-            shape = chords[c.drop(1).asSymbol] 
-                 ?? { noteLen = 2; chords[c.drop(2).asSymbol] }
-                 ?? { noteLen = 3; chords[c.drop(3).asSymbol] }
-                 ?? { ("Defaulting to major chord!").warn; chords.major };
+                shape = chords[c.drop(1).asSymbol] 
+                    ?? { noteLen = 2; chords[c.drop(2).asSymbol] }
+                    ?? { noteLen = 3; chords[c.drop(3).asSymbol] }
+                    ?? { ("Defaulting to major chord!").warn; chords.major };
 
-            note = Note(c.keep(noteLen));
+                note = Note(c.keep(noteLen));
 
-            note + shape;
-        };
+                note + shape;
+            };
 
-        chord = if(over.notNil) {
-            chord.collect { |note|
-                if((note % 12) < Note(over)) {
-                    note + 12
-                } {
-                    note
+            chord = if(over.notNil) {
+                chord.collect { |note|
+                    if((note % 12) < Note(over)) {
+                        note + 12
+                    } {
+                        note
+                    }
                 }
-            }
-        } {
-            chord;
-        };
+            } {
+                chord;
+            };
 
-        ^chord.sort;
+            chord.sort; 
+        } {
+            c
+        }
     }
 
     *new { |c|
