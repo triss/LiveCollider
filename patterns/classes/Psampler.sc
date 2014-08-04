@@ -97,7 +97,7 @@ Psampler {
                 // doesn't support multiple instruments in one event
                 currentEnvironment.getPairs.flop.do { |a i|
                     var e = Event.newFrom(a);
-                    e[\timingOffset] = ~strum.value * i;
+                    e[\timingOffset] = (e[\timingOffset] ?? 0) + (~strum.value * i);
                     e.play;
                 };
             }
