@@ -29,7 +29,6 @@ SampleMap {
                 // split lines in to key and value
                 # key, value = line.split($\=);
 
-                value.postln;
                 switch(key,
                     // if sample line store away path
                     "sample", { samplePath = root +/+ value.stripWhiteSpace.replace("\\", "/").toLower },
@@ -44,10 +43,9 @@ SampleMap {
 
                 // load the buffer in to the map if we have all the data we need
                 if(samplePath.notNil && sampleNote.notNil) {
-                    map[sampleNote] = Buffer.read(Server.default, samplePath);
+                    map[sampleNote] = (map[sampleNote] ?? []) ++ Buffer.read(Server.default, samplePath);
+                    sampleNote = nil; samplePath = nil;
                 };
-                
-                map.postln;
             }
         });
 
