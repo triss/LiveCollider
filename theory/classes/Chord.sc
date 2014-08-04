@@ -88,7 +88,7 @@ Chord {
                 shape = chords[c.drop(1).asSymbol] 
                     ?? { noteLen = 2; chords[c.drop(2).asSymbol] }
                     ?? { noteLen = 3; chords[c.drop(3).asSymbol] }
-                    ?? { ("Defaulting to major chord!").warn; chords.major };
+                    ?? { chords.major };
 
                 note = Note(c.keep(noteLen));
 
