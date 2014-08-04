@@ -35,7 +35,7 @@ Pmsampler {
         );
     }
 
-    *new {
-            
+    *new { |multi...args|
+        ^Pbind(\type, \tmsampler, \multi, multi, *args) 
     }
 }
