@@ -75,6 +75,7 @@ Chord {
 
             c = c.asString;
 
+            // lop off the inversion if specified
             if(c.contains("_")) {
                 #c, over = c.split($\_);
                 over = Note(over);
@@ -86,21 +87,29 @@ Chord {
             } {
                 var shape, root, noteNameLength = 1;
 
+                // parse chord name out of string
                 shape = chords[c.drop(1).asSymbol] 
                     ?? { noteNameLength = 2; chords[c.drop(2).asSymbol] }
                     ?? { noteNameLength = 3; chords[c.drop(3).asSymbol] }
                     ?? { chords.major };
 
+                // use the remainder of the string as the root note
                 root = Note(c.keep(noteNameLength));
 
+                // if an inversion was specified
                 if(over.notNil) {
+                    var octaveShift = 0;
+                    if(over < root) { octaveShift = 12 };
+
                     shape = shape.collect { |note| 
-                        if(note < (over - root)) {
+                        if(note < (over - root + octaveShift)) {
                             note + 12
                         } {
                             note
                         }
                     };
+
+                    shape = shape - octaveShift;
                 };
 
                 root + shape;
