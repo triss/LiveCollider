@@ -1,5 +1,5 @@
 Chord {
-    classvar chords;
+    classvar <chords;
 
     *initClass {
         chords = (
