@@ -95,7 +95,6 @@ Chord {
 
                 if(over.notNil) {
                     shape = shape.collect { |note| 
-                        [note, over - root].postln;
                         if(note < (over - root)) {
                             note + 12
                         } {
