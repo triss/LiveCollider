@@ -77,34 +77,34 @@ Chord {
 
             if(c.contains("_")) {
                 #c, over = c.split($\_);
+                over = Note(over);
             };
 
             // if we know the chord name return it
             chord = if(chords.includesKey(c)) {
                 chords[c];
             } {
-                var shape, note, noteLen = 1;
+                var shape, root, noteNameLength = 1;
 
                 shape = chords[c.drop(1).asSymbol] 
-                    ?? { noteLen = 2; chords[c.drop(2).asSymbol] }
-                    ?? { noteLen = 3; chords[c.drop(3).asSymbol] }
+                    ?? { noteNameLength = 2; chords[c.drop(2).asSymbol] }
+                    ?? { noteNameLength = 3; chords[c.drop(3).asSymbol] }
                     ?? { chords.major };
 
-                note = Note(c.keep(noteLen));
+                root = Note(c.keep(noteNameLength));
 
-                note + shape;
-            };
+                if(over.notNil) {
+                    shape = shape.collect { |note| 
+                        [note, over - root].postln;
+                        if(note < (over - root)) {
+                            note + 12
+                        } {
+                            note
+                        }
+                    };
+                };
 
-            chord = if(over.notNil) {
-                chord.collect { |note|
-                    if((note % 12) < Note(over)) {
-                        note + 12
-                    } {
-                        note
-                    }
-                }
-            } {
-                chord;
+                root + shape;
             };
 
             chord.sort; 
