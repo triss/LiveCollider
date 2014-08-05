@@ -1,8 +1,8 @@
 Chord {
-    classvar <chords;
+    classvar <shapes;
 
     *initClass {
-        chords = (
+        shapes = (
             major:          #[0, 4, 7],
             minor:          #[0, 3, 7],
             major7:         #[0, 4, 7, 11],
@@ -49,14 +49,15 @@ Chord {
             m13:            #[0, 3, 7, 10, 14, 17, 21]
         );
 
-        chords.m = chords.minor;
-        chords[\M] = chords.major;
-        chords[\7] = chords.dom7;
-        chords[\M7] = chords.major7;
-        chords[\m7] = chords.minor7;
-        chords.augmented = chords.aug;
-        chords.diminished = chords.dim;
-        chords.diminished7 = chords.dim7
+        // set up some alternative names for shapes
+        shapes.m = shapes.minor;
+        shapes[\M] = shapes.major;
+        shapes[\7] = shapes.dom7;
+        shapes[\M7] = shapes.major7;
+        shapes[\m7] = shapes.minor7;
+        shapes.augmented = shapes.aug;
+        shapes.diminished = shapes.dim;
+        shapes.diminished7 = shapes.dim7
     }
 
     *invert { |chord|
@@ -66,42 +67,58 @@ Chord {
     }
 
     *progression { |array| 
-        ^array.collect { |c| this.fromName(c) };
+        ^array.collect { |c| this.toNotes(c) };
     }
 
-    *fromName { |c|
-        ^if(c.isKindOf(Symbol)) {
+    *toDegrees { |name root scale|
+        root = Note(root) ?? 0;
+        scale = scale ?? { Scale.major };
+        
+        ^Chord.toNotes(name).asArray.collect { |n|
+            Note.toDegree(n, root, scale);
+        };
+    }
+
+    *toNotes { |name|
+        ^if(name.isKindOf(Symbol) or: { name.isKindOf(String) } 
+            and: { name != \ } and: { name != \rest }
+        ){
             var over, chord;
 
-            c = c.asString;
+            name = name.asString;
 
             // lop off the inversion if specified
-            if(c.contains("_")) {
-                #c, over = c.split($\_);
+            if(name.contains("_")) {
+                #name, over = name.split($\_);
                 over = Note(over);
             };
 
             // if we know the chord name return it
-            chord = if(chords.includesKey(c)) {
-                chords[c];
+            chord = if(shapes.includesKey(name)) {
+                shapes[name];
             } {
                 var shape, root, noteNameLength = 1;
 
                 // parse chord name out of string
-                shape = chords[c.drop(1).asSymbol] 
-                    ?? { noteNameLength = 2; chords[c.drop(2).asSymbol] }
-                    ?? { noteNameLength = 3; chords[c.drop(3).asSymbol] }
-                    ?? { chords.major };
+                shape = shapes[name.drop(1).asSymbol] 
+                    ?? { noteNameLength = 2; shapes[name.drop(2).asSymbol] }
+                    ?? { noteNameLength = 3; shapes[name.drop(3).asSymbol] }
+                    ?? { shapes.major };
 
                 // use the remainder of the string as the root note
-                root = Note(c.keep(noteNameLength));
+                root = Note(name.keep(noteNameLength));
 
                 // if an inversion was specified
                 if(over.notNil) {
                     var octaveShift = 0;
+
+                    // shift notes up an octave if root is higher than new base
                     if(over < root) { octaveShift = 12 };
 
+                    // iterate over the notes 
                     shape = shape.collect { |note| 
+                        // and if the notes are below our new lowest note
+                        // move it up an octave
                         if(note < (over - root + octaveShift)) {
                             note + 12
                         } {
@@ -109,6 +126,7 @@ Chord {
                         }
                     };
 
+                    // shift notes back if shift perfomed whilst inverting
                     shape = shape - octaveShift;
                 };
 
@@ -117,17 +135,18 @@ Chord {
 
             chord.sort; 
         } {
-            c
+            // return what was passed in if not a chord name
+            name
         }
     }
 
     *new { |c|
-        ^this.fromName(c);
+        ^this.toNotes(c);
     }
 }
 
 Note {
-    classvar notes;
+    classvar <notes;
 
     *initClass {
         // define note names
@@ -141,16 +160,28 @@ Note {
     }
 
     *new { |name|
-        var octaveShift = 0;
-        name = name.asString.toLower;
+        ^if(name.isKindOf(Symbol) or: { name.isKindOf(String) } 
+            and: { name != \ } and: { name != \rest }
+        ){
+            var octaveShift = 0;
+            name = name.asString.toLower;
 
-        // if octave specified chop it off and use it
-        if(name.last.isDecDigit) {
-            octaveShift = name.last.digit * 12 + 12; 
-            name = name.drop(-1);
+            // if octave specified chop it off and shift note
+            if(name.last.isDecDigit) {
+                octaveShift = name.last.digit * 12 + 12; 
+                name = name.drop(-1);
+            };
+
+            notes[name.asSymbol] + octaveShift;
+        } {
+            name;
         };
+    }
 
-        ^notes[name.asSymbol] + octaveShift;
+    *toDegree { |name root scale|
+        scale = scale ?? { Scale.major };
+        root = root ?? 0;
+        ^scale.performKeyToDegree(Note(name) - Note(root));
     }
 
     *noteName { |n| ^notes.findKeyForValue(n % 12) }
