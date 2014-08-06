@@ -70,13 +70,24 @@ Chord {
         ^array.collect { |c| this.toNotes(c) };
     }
 
+    *degreeProgression { |array root scale| 
+        ^array.collect { |c| this.toDegrees(c, root, scale) };
+    }
+
     *toDegrees { |name root scale|
-        root = Note(root) ?? 0;
-        scale = scale ?? { Scale.major };
-        
-        ^Chord.toNotes(name).asArray.collect { |n|
-            Note.toDegree(n, root, scale);
-        };
+        ^if(name.isKindOf(Symbol) or: { name.isKindOf(String) } 
+            and: { name != \ } and: { name != \rest }
+        ) {
+            root = Note(root) ?? 0;
+            scale = scale ?? { Scale.major };
+
+            Chord.toNotes(name).asArray.collect { |n| 
+                // TODO when next version of SC comes out use keyToDegree
+                n.keyToDegree2(scale, scale.stepsPerOctave) - root;
+            }
+        } {
+            name;
+        }
     }
 
     *toNotes { |name|
@@ -162,7 +173,7 @@ Note {
     *new { |name|
         ^if(name.isKindOf(Symbol) or: { name.isKindOf(String) } 
             and: { name != \ } and: { name != \rest }
-        ){
+        ) {
             var octaveShift = 0;
             name = name.asString.toLower;
 
@@ -178,11 +189,51 @@ Note {
         };
     }
 
-    *toDegree { |name root scale|
-        scale = scale ?? { Scale.major };
-        root = root ?? 0;
-        ^scale.performKeyToDegree(Note(name) - Note(root));
+    *noteName { |n| ^notes.findKeyForValue(n % 12) }
+}
+
++ SequenceableCollection {
+    asNotes {
+        ^Chord.progression(this);
     }
 
-    *noteName { |n| ^notes.findKeyForValue(n % 12) }
+    asDegrees { |root scale|
+        ^Chord.degreeProgression(this, root, scale);
+    }
+
+    // TODO won't be required in next SC release
+    performKeyToDegree2 { |key stepsPerOctave=12|
+        var nearestDegree, closestScale, sharpening, octave;
+
+        // store away octave and wrap key inside a single one
+        octave = (key / stepsPerOctave).floor;
+		key = key % stepsPerOctave;
+
+        // find the closest degree in scale for all keys in octave
+        closestScale = (0..stepsPerOctave).collect { |k| 
+            this.indexInBetween(k).floor 
+        };
+
+        // find the closest degree in the scale for the key
+		nearestDegree = this.indexInBetween(key).floor;
+
+        // calculate how much to sharpen our degree by
+        sharpening = closestScale.indexOf(nearestDegree) - key / -10;
+
+        ^nearestDegree + sharpening + (octave * this.size);
+    }
+}
+
++ SimpleNumber {
+    // TODO won't be required in next SC release
+    keyToDegree2 { arg scale, stepsPerOctave=12; // collection is sorted
+       ^scale.performKeyToDegree2(this, stepsPerOctave) 
+    }
+}
+
++ Scale {
+    // TODO won't be required in next SC release
+    performKeyToDegree2 { |degree stepsPerOctave=12| 
+        ^degrees.performKeyToDegree2(degree, stepsPerOctave)
+    }
 }
