@@ -1,0 +1,77 @@
+TITLE:: AutoFilter
+summary:: Filter with built in Tempo Synchronised Phased/Latched LFO and Amplitude Following
+categories:: Undocumented classes, UGens>Undocumented
+related:: Classes/SomeRelatedClass, Reference/SomeRelatedStuff, etc.
+
+DESCRIPTION::
+The AutoFilter effect imitates Ableton Live's Auto Filter.
+
+It can be modulated by an envelope follower and/or an LFO to create effects. The amplitude follower can track either the unaltered signal or an external sidechain source.  
+
+The LFO's rate and step rate are both tempo sync'd.
+
+
+CLASSMETHODS::
+
+METHOD:: ar
+(describe method here)
+
+ARGUMENT:: input
+(describe argument here)
+
+ARGUMENT:: cutoff
+(describe argument here)
+
+ARGUMENT:: rez
+(describe argument here)
+
+ARGUMENT:: type
+(describe argument here)
+
+ARGUMENT:: lfoAmt
+(describe argument here)
+
+ARGUMENT:: lfoRate
+(describe argument here)
+
+ARGUMENT:: lfoPhase
+(describe argument here)
+
+ARGUMENT:: lfoOffset
+(describe argument here)
+
+ARGUMENT:: lfoShape
+(describe argument here)
+
+ARGUMENT:: lfoStep
+(describe argument here)
+
+ARGUMENT:: lfoStepRate
+(describe argument here)
+
+ARGUMENT:: ampFollowAmt
+(describe argument here)
+
+ARGUMENT:: ampFollowAttack
+(describe argument here)
+
+ARGUMENT:: ampFollowDecay
+(describe argument here)
+
+ARGUMENT:: sidechain
+(describe argument here)
+
+ARGUMENT:: tempo
+(describe argument here)
+
+returns:: (describe returnvalue here)
+
+
+INSTANCEMETHODS::
+
+
+EXAMPLES::
+
+code::
+(some example code)
+::
