@@ -22,32 +22,77 @@ Psampler {
             synthDefSpecs.keysValuesDo { |name spec|         
                 // set up sampler synths for use with Psampler etc.
                 SynthDef(name, {
-                    arg out = 0, buffer = 0, amp = 1, pan = 0, rate = 1, start = 0,
-                    attack = 0, sustain = 1, release = 0.001;
+                    // standard bits and bobs
+                    arg out=0, amp=1, pan=0, gate=0, tempo=1,
+                    
+                    // buffer, playback rate and start positioon
+                    buffer=0, rate=1, start=0, glide=0,
+                    
+                    // filter stuff
+                    filterType=0, cutoff=1000, rez=0.5,
 
-                    var sig, env;
+                    // envelope shape and application
+                    a=0, d=0, s=1, r=0.01, envPitchAmt=0, envPanAmt=0, envCutoffAmt=0,
 
-                    // attack and sustain are proportion of overall sustain
-                    attack = attack * sustain;
-                    release = release * sustain;
+                    // lfo stuff
+                    lfoRate=0, lfoShape=0, lfoPhase=0, lfoSmooth=0,
+                    lfoPitchAmt=0, lfoAmpAmt=0, lfoPanAmt=0, lfoCutoffAmt=0;
 
-                    // recalculate sustain with attack/decay portions of envelope
-                    sustain = sustain - attack - release;
+                    var sig, env, lfo;
 
-                    // create the amp envelope
-                    env = EnvGen.ar(
-                        Env.linen(attack, sustain, release), 
-                        doneAction: 2
-                    );
+                    // apply glide to pitch
+                    rate = rate.lag(glide);
+
+                    // create the envelope
+                    env = EnvGen.ar(Env.adsr(a, d, s, r), gate, doneAction: 2);
+
+                    // apply envelope to synth params
+                    amp = env * amp;
+                    cutoff = env * envCutoffAmt * cutoff + cutoff;
+                    rate = env * envPitchAmt * rate + rate;
+                    pan = env * envPanAmt + pan;
+
+                    // tempo sync the lfo
+                    lfoRate = lfoRate * tempo;
+
+                    // create the lfo
+                    lfo = SelectX.kr(lfoShape, [
+                        SinOsc.kr(lfoRate, lfoPhase),
+                        LFSaw.kr(lfoRate, lfoPhase),
+                        LFPulse.kr(lfoRate, lfoPhase),
+                        LFNoise0.kr(lfoRate),
+                        LFNoise1.kr(lfoRate)
+                    ]).lag(lfoSmooth);
+
+                    // apply lfo to synth params
+                    amp = lfoAmpAmt * lfo + amp;
+                    rate = lfoPitchAmt * lfo * rate + rate;
+                    pan = lfoPanAmt * lfo + pan;
+                    cutoff = lfoCutoffAmt * lfo * cutoff + cutoff;
+
+                    // clip stuff that nees to be in a certain range
+                    pan = pan.clip(-1, 1);
+                    cutoff = cutoff.clip(30, 16000);
 
                     // playback the buffer
                     sig = PlayBuf.ar(
                         spec.numChannels, buffer, 
                         rate: BufRateScale.kr(buffer) * rate, 
+                        trigger: gate,
                         startPos: start * BufFrames.kr(buffer),
+                        doneAction: 2
                     );
 
-                    sig = sig * env * amp;
+                    // apply the amp envelope
+                    sig = sig * amp;
+                    
+                    // filter the signal
+                    sig = SelectX.ar(filterType, [
+                        sig,
+                        RLPF.ar(sig, cutoff, rez),
+                        BPF.ar(sig, cutoff, rez),
+                        RHPF.ar(sig, cutoff, rez)
+                    ]);
 
                     // pan and amplify the signal
                     sig = spec.panner(sig, pan);
@@ -59,7 +104,6 @@ Psampler {
                 // all controls at initialisation rate since these samplers are
                 // taylored to short samplers 
                 rates: \ir ! 9,
-
                 metadata: (specs: (
                     buffer: [0, 1024, \lin, 1].asSpec,
                     out: \audiobus, 
@@ -67,9 +111,7 @@ Psampler {
                     pan: \pan,
                     rate: [-8, 8, \exp, 0, 1].asSpec,
                     start: \unipolar,
-                    attack: \unipolar,
-                    sustain: [0, 60],
-                    release: \unipolar
+                    a: [0, 10], d: [0, 10], s: \unipolar, r: [0, 10]
                 ))).add;
             };
         };
