@@ -23,7 +23,7 @@ Psampler {
                 // set up sampler synths for use with Psampler etc.
                 SynthDef(name, {
                     // standard bits and bobs
-                    arg out=0, amp=1, pan=0, gate=0, tempo=1,
+                    arg out=0, amp=1, pan=0, gate=0.5, tempo=1,
                     
                     // buffer, playback rate and start positioon
                     buffer=0, rate=1, start=0, glide=0,
@@ -101,17 +101,33 @@ Psampler {
                     OffsetOut.ar(out, sig)
                 },
 
-                // all controls at initialisation rate since these samplers are
-                // taylored to short samplers 
-                rates: \ir ! 9,
+                rates: \kr ! 17,
+
                 metadata: (specs: (
                     buffer: [0, 1024, \lin, 1].asSpec,
                     out: \audiobus, 
                     amp: [0, 1],
                     pan: \pan,
+                    gate: [0, 1, \lin, 1],
+                    tempo: [0, 1000],
+                    glide: [0, 10],
                     rate: [-8, 8, \exp, 0, 1].asSpec,
                     start: \unipolar,
-                    a: [0, 10], d: [0, 10], s: \unipolar, r: [0, 10]
+                    a: [0, 10], d: [0, 10], s: \unipolar, r: [0, 10],
+                    filterType: [0, 3, \lin],
+                    cutoff: \safeFilter.asSpec,
+                    rez: \rq,
+                    lfoPanAmt: [-1, 1, \lin],
+                    lfoPitchAmt: [-8, 8, \exp],
+                    lfoCutoffAmt: [-8, 8, \exp],
+                    lfoAmpAmt: [-8, 8, \exp],
+                    lfoRate: \lofreq,
+                    lfoPhase: \phase,
+                    lfoSmooth: [0, 1],
+                    envAmpAmt: [0, 1],
+                    envPanAmt: [0, 1],
+                    envCutoffAmt: [0, 8],
+                    envPitchAmt: [0, 8],
                 ))).add;
             };
         };
