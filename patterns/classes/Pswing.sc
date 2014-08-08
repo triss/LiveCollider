@@ -1,9 +1,7 @@
 Pswing {
-    *new { |pattern amt=0.25 base=0.25|
-        var swinger;
-       
+    *new { |pattern amt=0.25 base=0.25 threshold=0|
         // swing lifted from Pattern Guide Cookbook 08: Swing
-        swinger = Prout({ |ev|
+        var swinger = Prout({ |ev|
             var now, nextTime = 0, thisShouldSwing, nextShouldSwing = false, adjust;
             while { ev.notNil } {
                 // current time is what was "next" last time
@@ -39,6 +37,8 @@ Pswing {
             };
         });
 
-        ^Pchain(swinger, pattern, (swingAmount: amt, swingBase: base))
+        ^Pchain(swinger, pattern, (
+            swingAmount: amt, swingBase: base, swingThreshold: threshold
+        ))
     }
 }
