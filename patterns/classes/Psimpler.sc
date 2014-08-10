@@ -1,20 +1,44 @@
-Psampler {
+Psimpler {
     *initClass {
+        Class.initClassTree(Event);
+
         StartUp.add {
             // we'll need a different synth and differing panning methods 
             // dependant on the number of channels in buffer to be played 
-            var synthDefSpecs = (
-                tsampler: (
-                    numChannels: 1, 
-                    panner: { |e sig pan| Pan2.ar(sig, pan) }
+            var playBufPlayer, vDiskPlayer, synthDefSpecs;
+    
+            // for playing back samples from memory
+            playBufPlayer = { |e numChannels buffer rate gate start|
+                 PlayBuf.ar(
+                    numChannels, buffer, 
+                    rate: rate, 
+                    trigger: gate,
+                    startPos: start * BufFrames.kr(buffer),
+                );
+            };
+            
+            // for playing back samples from disk
+            vDiskPlayer = { |e numChannels buffer rate| 
+                [numChannels, buffer, rate].postln;
+                VDiskIn.ar(numChannels, buffer, rate);
+            };
+
+            synthDefSpecs = (
+                tsimpler1: (
+                    channels: 1, 
+                    player: playBufPlayer
                 ),
-                tsampler2: (
-                    numChannels: 2, 
-                    panner: { |e sig pan| Pan2.ar(sig, pan) }
+                tsimpler2: (
+                    channels: 2,     
+                    player: playBufPlayer
                 ),
-                tsampler6: (
-                    numChannels: 6, 
-                    panner: { |e sig pan| Splay.ar(sig, center: pan) }
+                tsimplerbig1: (
+                    channels: 1,
+                    player: vDiskPlayer
+                ),
+                tsimplerbig2: (
+                    channels: 2,
+                    player: vDiskPlayer
                 )
             );
            
@@ -23,8 +47,11 @@ Psampler {
                 // set up sampler synths for use with Psampler etc.
                 SynthDef(name, {
                     // standard bits and bobs
-                    arg out=0, amp=1, pan=0, gate=0.5, tempo=1,
-                    
+                    arg out=0, amp=1, id=0, gate=0.5, tempo=1,
+
+                    // panning related stuff
+                    pan=0, spread=1, 
+
                     // buffer, playback rate and start positioon
                     buffer=0, rate=1, start=0, glide=0,
                     
@@ -32,7 +59,8 @@ Psampler {
                     filterType=0, cutoff=1000, rez=0.5,
 
                     // envelope shape and application
-                    a=0, d=0, s=1, r=0.01, envPitchAmt=0, envPanAmt=0, envCutoffAmt=0,
+                    a=0, d=0, s=1, r=0.01, 
+                    envPitchAmt=0, envPanAmt=0, envCutoffAmt=0,
 
                     // lfo stuff
                     lfoRate=0, lfoShape=0, lfoPhase=0, lfoSmooth=0,
@@ -74,13 +102,11 @@ Psampler {
                     pan = pan.clip(-1, 1);
                     cutoff = cutoff.clip(30, 16000);
 
-                    // playback the buffer
-                    sig = PlayBuf.ar(
-                        spec.numChannels, buffer, 
-                        rate: BufRateScale.kr(buffer) * rate, 
-                        trigger: gate,
-                        startPos: start * BufFrames.kr(buffer),
-                        doneAction: 2
+                    rate = rate * BufRateScale.kr(buffer);
+
+                    // playback the buffer, playback method described by spec
+                    sig = spec.player(
+                        spec.channels, buffer, rate, gate, start
                     );
 
                     // apply the amp envelope
@@ -95,7 +121,7 @@ Psampler {
                     ]);
 
                     // pan and amplify the signal
-                    sig = spec.panner(sig, pan);
+                    sig = Splay.ar(sig, spread, center: pan);
 
                     // output the audio
                     OffsetOut.ar(out, sig)
@@ -133,14 +159,14 @@ Psampler {
         };
 
         Event.addEventType(
-            \tsampler,  { |server|
+            \tsimpler, { |server|
                 // choose instrument based on number of channels in buffer
                 ~instrument = ~buffer.asArray.collect { |b| 
                     switch(b.numChannels,
-                        1, { \tsampler },
-                        2, { \tsampler2 },
-                        6, { \tsampler6 }, // I have the odd six channel sound files!
-                        { ("The tsampler eventType does not how to play buffers with" 
+                        1, { \tsimpler },
+                        2, { \tsimpler2 },
+                        6, { \tsimpler6 }, // I have the odd six channel sound files!
+                        { ("The tsimpler eventType does not how to play buffers with" 
                         + b.numChannels + "channels.").error; }
                     );
                 };
@@ -155,6 +181,8 @@ Psampler {
                 // doesn't support multiple instruments in one event
                 currentEnvironment.getPairs.flop.do { |a i|
                     var e = Event.newFrom(a);
+
+                    // reimpliment strum since it's values are lost
                     e[\timingOffset] = (e[\timingOffset] ?? 0) + (~strum.value * i);
                     e.play;
                 };
@@ -163,6 +191,6 @@ Psampler {
     }
 
     *new { |bufferPattern...args|
-        ^Pbind(\type, \tsampler, \buffer, bufferPattern, *args);
+        ^Pbind(\type, \tsimpler, \buffer, bufferPattern, *args);
     }
 }
