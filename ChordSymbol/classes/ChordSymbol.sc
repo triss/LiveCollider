@@ -165,13 +165,12 @@ ChordSymbol {
         }
     }
 
-    *new { |c|
-        ^this.toNotes(c);
-    }
+    *new { |c| ^this.asNotes(c) }
 }
 
 NoteSymbol {
     classvar <notes;
+    classvar <restNames;
 
     *initClass {
         // define note names
@@ -182,39 +181,47 @@ NoteSymbol {
             notes[(name ++ \s).asSymbol] = val + 1;
             notes[(name ++ \b).asSymbol] = val - 1;
         };
+
+        // set up rest names
+        restNames = IdentitySet[\, \rest, \r, ""];
     }
 
     *asNote { |name|
-        if(name.isKindOf(Symbol) or: { name.isKindOf(String) } 
-            and: { name != \ } and: { name != \rest } and: { name != "" }
-        ) {
-            var octave = 0, note, dur;
-            name = name.asString.toLower;
+        var octave = 0, note, dur;
 
-            // if duration specified lop it off
-            #name, dur = name.split($\_);
+        // reguritate anything we definately can't process
+        if(name.isRest or: name.isKindOf(String).not or: name.isKindOf(Symbol).not) { 
+            ^name 
+        };
+       
+        // make name a lowercase string
+        name = name.asString.toLower;
 
-            // convert duration if specified
-            dur = dur !? { NoteSymbol.asDuration(dur) }; 
+        // if duration specified lop it off
+        #name, dur = name.split($\_);
 
-            // if octave specified chop it off and shift note
-            if(name.notNil and: { name.last.isDecDigit }) {
-                octave = name.last.digit * 12 + 12; 
-                name = name.drop(-1);
-            };
+        // if name is a number we have a rest
+        if(name.asNumber != 0) {
+            ^[\, NoteSymbol.asDuration(name)];
+        };
 
-            // add the octave to the note number
-            notes[name.asSymbol] !? { note = notes[name.asSymbol] + octave };
-            
-            // if duration was specified return that with note as tuple
-            dur !? { ^[note, dur] };
+        // convert duration if specified
+        dur = dur !? { NoteSymbol.asDuration(dur) }; 
 
-            // otherwise return the note
-            note !? { ^note };
-        } 
+        // if octave specified chop it off and shift note
+        if(name.notNil and: { name.last.isDecDigit }) {
+            octave = name.last.digit * 12 + 12; 
+            name = name.drop(-1);
+        };
 
-        // if it wasn't something that could be parsed return that
-        ^name;
+        // add the octave to the note number
+        notes[name.asSymbol] !? { note = notes[name.asSymbol] + octave };
+        
+        // if duration was specified return that with note as tuple
+        dur !? { ^[note, dur] };
+
+        // otherwise return the note
+        note !? { ^note };
     }
     
     *asDegree { |name scale stepsPerOctave=12| 
@@ -232,6 +239,8 @@ NoteSymbol {
     }
 
     *noteName { |n| ^notes.findKeyForValue(n % 12) }
+
+    *new { |c| ^this.asNotes(c) }
 }
 
 + Symbol {
@@ -247,15 +256,18 @@ NoteSymbol {
         ^NoteSymbol.asDegree(this, scale, notesPerOctave) 
     }
     
+    // override what happens when Symbol is embedded in a stream
     embedInStream {
-        ^(NoteSymbol.asNote(this) ?? this).postln.yield;
+        ^(NoteSymbol.asNote(this) ?? this).yield;
     }
 
-//    next { 
-//        ^(NoteSymbol.asNote(this) ?? { ChordSymbol.asNotes(this) } ?? this) 
-//    }
+    // work out wether or not this is a rest or not
+    isRest { 
+        ^this.isMap.not
+        and: { NoteSymbol.asNote(this) == this }
+        and: { ChordSymbol.asNotes(this) == this };
+    }
 
-    isRest { ^(NoteSymbol.asNote(this) == this) }
 }
 
 + SequenceableCollection {
