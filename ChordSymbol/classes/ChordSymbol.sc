@@ -136,6 +136,8 @@ ChordSymbol {
             shape = shape ?? { shapes.major };
         };
 
+        [root, over, shape, dur].postln;
+
         // if an inversion was specified
         if(over.notNil and: shape.notNil) {
             var octaveShift = 0;
@@ -164,7 +166,7 @@ ChordSymbol {
         if(chord.isString) { ^input };
 
         // if duration was specified return it with the chord
-        dur !? { ^[chord, dur] };
+        dur !? { ^[chord, dur.asInteger] };
 
         // otherwise return the chord
         ^chord;
