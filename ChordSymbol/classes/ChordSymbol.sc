@@ -117,6 +117,8 @@ ChordSymbol {
 
         over = NoteSymbol.asNote(over);
 
+        [name, over, dur].postln;
+
         // parse chord name out of string shortening it a character at a 
         // time if no match found
         shape = shapes[name.asSymbol];
@@ -216,8 +218,6 @@ NoteSymbol {
         // add the octave to the note number
         notes[name.asSymbol] !? { note = notes[name.asSymbol] + octave };
        
-        [dur, note].postln;
-
         // if duration was specified return that with note as tuple
         dur !? { ^[note, dur] };
 
