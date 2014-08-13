@@ -1,4 +1,4 @@
-SfzPlayback {
+SfzReader {
     *initClass {
         Class.initClassTree(Event);
 
@@ -89,7 +89,7 @@ SfzPlayback {
         );
     }
 
-    *parseSfz { |path|
+    *parse { |path|
         var data, sampleMap, region, group, groupProperties, currentNodeType;
 
         // at it's toplevel an SFZ contains an arbitray number of groups 
@@ -163,7 +163,7 @@ SfzPlayback {
         ^sampleMap;
     }
 
-    *cueSfz { |sfz root server|
+    *cue { |sfz root server|
         server = server ?? { Server.default };
         
         sfz.keysValuesDo { |lovel group| 
@@ -178,8 +178,15 @@ SfzPlayback {
             };
         };
     }
+
+    *load { |path root server| 
+        sfz = SfzReader.parse(path);
+        SfzReader.cue(sfz);
+        ^sfz
+    }
 }
 
+// a helper class for Pbind'ing sfv files
 Psfv : Pbind {
     *new { |multi...args|
         ^super.new(\type, \sfvplay, \multi, multi, *args)
