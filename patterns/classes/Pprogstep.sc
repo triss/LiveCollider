@@ -1,19 +1,16 @@
-// steps through progression
-Pprogstep {
-    *new { |prog durs=4 repeats=inf|
-        ^Pstep(Pprog(prog), Pseq([durs], inf), repeats)
-    }
-}
-
-// Like Pseq but converts symbols to chords
-Pprog {
-    *new { |pattern repeats=inf|
-        // wrap arrays etc up in a Pseq
-        if(pattern.isSequenceableCollection) {
-            pattern = Pseq(pattern, repeats);
+Pprog : Pstep {
+    *new { |progression repeats|
+        var durs, list;
+        repeats = repeats ?? inf;
+        progression = progression.progression;
+        
+        // all values must be paired with a duration
+        progression.do { |v|
+            v.isArray.not { "All Pprog items must have a duration".warn; ^this; }
         };
 
-        // translate chord names to chord values
-        ^pattern.collect { |c| Chord(c) };
+        #list, durs = progression.flop;
+
+        ^super.new(Pseq(list), Pseq(durs), repeats);
     }
 }
