@@ -2,10 +2,10 @@ Pbindnode : PbindProxy {
     var setupAction;
 
     *new { |node...args|
-        ^super.new(\type, \set, *args).initPnode(node, args);
+        ^super.new(\type, \set, *args).initPbindnode(node, args);
     }
 
-    initPnode { |node args|
+    initPbindnode { |node args|
         // throw an error if node isn't something we can control
         if(node.respondsTo(\asNodeID).not and: { node.isKindOf(Symbol).not }) {
             "node must be a Synth, Group, Node, or NodeProxy".error
@@ -24,11 +24,12 @@ Pbindnode : PbindProxy {
                 node = Synth(node, initialSettings);
 
                 // map this pattern to the synth
-                this.set(\id, node.asNodeID);
+                this.set(\id, Pfunc({ node.asNodeID }));
             };
         } {
             // otherwise just set the id this pattern should work on
-            this.set(\id, node.asNodeID);
+            node.postln;
+            this.set(\id, Pfunc({ node.asNodeID.postln }));
         }
     }
 
@@ -39,4 +40,8 @@ Pbindnode : PbindProxy {
         // play just like any other pattern
         ^super.play(clock, protoEvent, quant)
     }
+}
+
+Pnp {
+    *new { |node...args| node[1] = \set -> Pbind(*args) }
 }
