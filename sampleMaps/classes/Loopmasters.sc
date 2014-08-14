@@ -24,7 +24,7 @@ RandomNuTech {
 
 LoopmastersSamples {
     *loadMulti { |path| 
-        var multi = ();
+        var multi = IdentityDictionary();
 
         // iterate over all the sample paths in path
         path.pathMatch.do { |p|
@@ -39,10 +39,10 @@ LoopmastersSamples {
             // - and switches # for s (NoteSymbol uses s to denote sharp)
             // - uses NoteSymbol to look up which midi note this sample should
             //   be assigned to
-            noteNumber = NoteSymbol(p.basename.splitext.first.split($\_).last.tr($\#, $s));
+            noteNumber = NoteSymbol(p.basename.splitext.first.split($\_).last.tr($\#, $s).stripWhiteSpace);
 
             // load the sample in to the appropiate midi sample slot
-            multi[noteNumber] = Buffer.read(Server.default, p);
+            multi.put(noteNumber, Buffer.read(Server.default, p));
         };
 
         ^multi;
