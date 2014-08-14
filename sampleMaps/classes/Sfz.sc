@@ -78,7 +78,7 @@ SfzReader {
 
                     // we're going to assume all buffers have same number of channels
                     // which is more than likely with large multisample instruments
-                    ~instrument = \tsimplerbig ++ ~buffer[0].numChannels;
+                    ~instrument = (\tsimplerbig ++ ~buffer[0].numChannels).asSymbol;
                     
                 };
                 // use normal note 
@@ -179,9 +179,16 @@ SfzReader {
         };
     }
 
+    // convienace for parsing and cueing all samples
     *load { |path root server| 
-        sfz = SfzReader.parse(path);
-        SfzReader.cue(sfz);
+        var sfz = SfzReader.parse(path);
+
+        // if no root specified guess files are in same folder as .sfz file
+        root = root ?? path.dirname;
+        
+        // enqueue the files
+        SfzReader.cue(sfz, root, server);
+        
         ^sfz
     }
 }
