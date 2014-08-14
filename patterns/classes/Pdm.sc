@@ -34,7 +34,7 @@ Pdm : NodeProxy {
 
         // accent every fourth hit by default
         accentAmountProxy = PatternProxy(0.5).quant_(4);
-        accentsProxy = PatternProxy(
+        accentsProxy = EventPatternProxy(
             Paccent(
                 [1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0], 
                 accentAmountProxy)
@@ -65,15 +65,9 @@ Pdm : NodeProxy {
 
             pbindArgs = pattern;
 
-            // wrap arrays up any arrays as Pseq's as convienace since
-            // chords would rarely be fed to a drum machine
-            pbindArgs.keysValuesChange { |k obj|
-                if(obj.isArray) {
-                    Pseq(obj, inf);
-                } {
-                    obj
-                }
-            };
+            // wrap any arrays as Pseq's as convienace since chords are rarely 
+            // fed to a drum machine
+            pbindArgs.keysValuesChange { |k obj| Pseq(obj.asArray, inf) };
 
             pbindArgs.make {
                 // ensure the following keys are set for the pattern
@@ -102,8 +96,8 @@ Pdm : NodeProxy {
             dmtSpace[trackName] = 
                 Pnfd(max(length, pbindArgs[\length]),
                     Pnfd(pbindArgs[\length], 
-                    Pswing(Pbind(*pbindArgs.getPairs)
-                )));
+                    PbindProxy(*pbindArgs.getPairs)
+                ));
 
             // work out which slot in our outProxy this dmt consume
             dmtOrdering.add(trackName);
@@ -143,22 +137,37 @@ Pdm : NodeProxy {
 }
 
 Pdmt {
+    classvar <silence;
+
     *initClass {
+        StartUp.add({
+            Server.default.onBootAdd({
+                silence = Buffer.alloc(Server.default, 1024);
+            });
+        });
+
         Event.addEventType(
             \pdmtsampler,  {
                 // if a note has been specified? does degree stuff work?
+                ~baseNote = ~baseNote ?? 60;
+
                 if(~note.notNil) {
-                    ~rate = ~rate ?? 1 * ~note.midiratio
+                    ~rate = ~rate ?? 1 * (~midinote - ~baseNote).midiratio;
                 };
 
                 // map buffer names to buffers
                 ~buffer = ~buffer.asArray.collect { |name|
-                    // if drum map contains round robin this handles it
-                    ~drums[name].asArray.choose;
+                    if(name != \) {
+                        // if drum map contains round robin this handles it
+                        ~drums[name].asArray.choose;
+                    } {
+                        // return silence if rest specified
+                        Pdmt.silence;
+                    }
                 };
 
                 // set event type to \tsampler for further processing
-                ~type = \tsampler;
+                ~type = \tsimpler;
 
                 // trigger the event
                 currentEnvironment.play;
