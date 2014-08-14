@@ -19,7 +19,6 @@ Psimpler {
             
             // for playing back samples from disk
             vDiskPlayer = { |e numChannels buffer rate| 
-                [numChannels, buffer, rate].postln;
                 VDiskIn.ar(numChannels, buffer, rate);
             };
 
@@ -160,14 +159,18 @@ Psimpler {
 
         Event.addEventType(
             \tsimpler, { |server|
+                // if a note has been specified
+                if(~note.notNil) {
+                    ~baseNote = ~baseNote ?? 60;
+
+                    ~rate = ~rate ?? 1 * (~midinote - ~baseNote).midiratio;
+                };
+
                 // choose instrument based on number of channels in buffer
                 ~instrument = ~buffer.asArray.collect { |b| 
                     switch(b.numChannels,
-                        1, { \tsimpler },
+                        1, { \tsimpler1 },
                         2, { \tsimpler2 },
-                        6, { \tsimpler6 }, // I have the odd six channel sound files!
-                        { ("The tsimpler eventType does not how to play buffers with" 
-                        + b.numChannels + "channels.").error; }
                     );
                 };
 
