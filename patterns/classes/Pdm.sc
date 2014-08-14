@@ -15,8 +15,8 @@ Pdm : NodeProxy {
     var <length;
 
     // pattern proxies for swing and accents
-    var accentsProxy, accentAmountProxy;
-    var swingAmountProxy, swingBaseProxy; 
+    var <accentsProxy, accentAmtProxy, <accentValueProxy, accentValue;
+    var swingAmtProxy, swingBaseProxy; 
 
     *new { |drumMap|
         ^super.new(Server.default, \audio, 2).initPdm(drumMap);
@@ -33,21 +33,35 @@ Pdm : NodeProxy {
         length = 4;
 
         // accent every fourth hit by default
-        accentAmountProxy = PatternProxy(0.5).quant_(4);
-        accentsProxy = EventPatternProxy(
-            Paccent(
-                [1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0], 
-                accentAmountProxy)
-            ).quant_(4);
+        accentAmtProxy = PatternProxy(0.5);
+
+        // no quantisation for accent value 
+        accentValueProxy = PatternProxy(1).quant_(nil);
 
         // start up with a little bit of swing
-        swingAmountProxy = PatternProxy(1/3).quant_(4);
-        swingBaseProxy = PatternProxy(1/4).quant_(4);
+        swingAmtProxy = PatternProxy(1/3);
+        swingBaseProxy = PatternProxy(1/4);
 
         // TODO: look up server from NodeProxy
-        dmtSpace = ProxySpace(Server.default);
+        dmtSpace = ProxySpace(this.server);
         dmtSpace.quant = 4;
         dmtOrdering = IdentitySet();
+
+        this.updateAccentPattern([1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0]);
+        dmtSpace[\accentsProxy].play;
+    }
+
+    updateAccentPattern { |accents|
+        dmtSpace[\accentsProxy] = Pnfd(4, Pchain(
+            Pfunc({ |ev| accentValue = (ev.accent ?? 1); ev }),
+            Pbind(
+                \accent, Pseq(accents.rotate(-5), inf) * accentAmtProxy + 1 - accentAmtProxy,
+                \dur, 0.25, \note, \,
+                \lag, -0.01,
+                \swingAmt, swingAmtProxy,
+                \swingBase, swingBaseProxy
+            )
+        ));
     }
 
     reconstructPatterns {
@@ -79,25 +93,27 @@ Pdm : NodeProxy {
                 ~buffer = ~buffer ?? trackName;
 
                 // multiply amp by accents
-                ~amp = (~amp ?? 0.5) * accentsProxy;
+                ~amp = (~amp ?? 0.5) * Pfunc({ accentValue });
 
                 // set up swing
-                ~swingAmount = ~swingAmount ?? swingAmountProxy;
+                ~swingAmt = ~swingAmt ?? swingAmtProxy;
                 ~swingBase = ~swingBase ?? swingBaseProxy;
 
-                // TODO: hmmm Pfindur doesn't take patterns?
-                ~length = ~length ?? length.postln;
+                ~length = ~length ?? length;
 
                 // use the pdmtsampler event type
                 ~type = \pdmtsampler;
             };
 
+            if(pattern.isKindOf(String)) {
+                
+            };
+
             // create the accented and swung drum track
             dmtSpace[trackName] = 
-                Pnfd(max(length, pbindArgs[\length]),
-                    Pnfd(pbindArgs[\length], 
+                Pnfd(pbindArgs[\length], 
                     PbindProxy(*pbindArgs.getPairs)
-                ));
+                );
 
             // work out which slot in our outProxy this dmt consume
             dmtOrdering.add(trackName);
@@ -118,9 +134,9 @@ Pdm : NodeProxy {
     }
 
     // setters for shared pattern params
-    accents_ { |acc| accentsProxy.source = Paccent(acc, accentAmountProxy) }
-    accentAmount_ { |amt| accentAmountProxy.source = amt }     
-    swingAmount_ { |amt| swingAmountProxy.source = amt }
+    accents_ { |acc| this.updateAccentPattern(acc) }
+    accentAmt_ { |amt| accentAmtProxy.source = amt }     
+    swing_ { |amt| swingAmtProxy.source = amt }
     swingBase_ { |base| swingBaseProxy.source = base }
     drumMap_ { |dm| drumMapProxy.source = dm }
 
@@ -130,8 +146,8 @@ Pdm : NodeProxy {
 
     // and getters
     accents { ^accentsProxy.source }
-    accentAmount { ^accentAmountProxy.source }     
-    swingAmount { ^swingAmountProxy.source }
+    accentAmt { ^accentAmtProxy.source }     
+    swing { ^swingAmtProxy.source }
     swingBase { ^swingBaseProxy.source }
     drumMap { ^drumMapProxy.source }
 }
@@ -148,13 +164,6 @@ Pdmt {
 
         Event.addEventType(
             \pdmtsampler,  {
-                // if a note has been specified? does degree stuff work?
-                ~baseNote = ~baseNote ?? 60;
-
-                if(~note.notNil) {
-                    ~rate = ~rate ?? 1 * (~midinote - ~baseNote).midiratio;
-                };
-
                 // map buffer names to buffers
                 ~buffer = ~buffer.asArray.collect { |name|
                     if(name != \) {
